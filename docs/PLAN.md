@@ -3,15 +3,15 @@
 Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test that must pass before moving on.
 ⭐ = milestone. See [DESIGN.md](DESIGN.md) for the details behind each item.
 
-**Current phase:** 0 (Setup)
+**Current phase:** 1 (World model). Phase 0 complete.
 
 ---
 
 ## Phase 0: Setup
-- [ ] Install the Claude Code CLI (done, v2.1.316) and **log in with the Claude Pro account** (OAuth session expired)
-- [ ] Verify that a headless Haiku call works: `claude -p --model haiku "say hi"`
-- [ ] Work out the **isolation flags**: custom system prompt, no tools, single turn, JSON output, no user settings/hooks/plugins/CLAUDE.md. Write them down in `sim/driftwood/llm/claude_cli.py` notes
-- [ ] Canary test: an isolated call must show no trace of local plugin or hook context
+- [x] Install the Claude Code CLI (v2.1.316) and log in with the Claude Pro account
+- [x] Verify that a headless Haiku call works: `claude -p --model haiku "say hi"`
+- [x] Work out the **isolation flags** (written up in [CLI_NOTES.md](CLI_NOTES.md))
+- [x] Canary test: hooks, plugins, skills and CLAUDE.md are isolated. The user's email and a Claude Code environment block still leak, and are mitigated in the prompt (see CLI_NOTES.md)
 - [x] `git init`, `.gitignore` (venv, node_modules, `*.db`, cache)
 - [x] Python venv plus the `sim/` package skeleton (`pyproject.toml`, pytest, ruff)
 - [x] `web/` skeleton: Vite + TypeScript + three
