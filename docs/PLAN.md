@@ -3,7 +3,7 @@
 Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test that must pass before moving on.
 ⭐ = milestone. See [DESIGN.md](DESIGN.md) for the details behind each item.
 
-**Current phase:** 6 (God mode). Phases 0-5 complete. The 3D viewer (Phases 9-11) is already built against replay files, ahead of the server (Phase 8); remaining viewer work is the god console, fork tree, live feed and storm weather.
+**Current phase:** 7 (Forks and replay). Phases 0-6 complete. The 3D viewer (Phases 9-11) is already built against replay files, ahead of the server (Phase 8); remaining viewer work is the god console, fork tree, live feed and storm weather.
 `[~]` = partly done.
 
 ---
@@ -92,7 +92,7 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 - [x] CLI: `driftwood event <run> <type> --targets ... --params ... [--at tick]`
 - [x] Tests for each handler
 
-**✅ Done when:** a rumor injected into one agent visibly spreads through the chat in a real run.
+**✅ Done when:** a rumor injected into one agent visibly spreads through the chat in a real run. (Met on the second try, see [RUMOR_TEST.md](RUMOR_TEST.md); the first rumor was ignored by its recipient.)
 
 ---
 
