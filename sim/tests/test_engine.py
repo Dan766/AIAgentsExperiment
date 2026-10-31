@@ -269,3 +269,10 @@ async def test_vote_prompt_appears_only_on_the_ballot_tick_and_ballots_are_secre
     for a in eng.agents.values():
         everything = " ".join(m.text for m in a.memory.items) + " ".join(t for _, t in a.pending_obs)
         assert "voted for" not in everything and "names" not in everything
+
+
+def test_prompt_lists_pronouns_for_the_others_and_states_the_build_cap():
+    eng = new_engine()
+    system, _ = eng.agents["Mara"].build_prompts(eng.world)
+    assert "Jun (they/them)" in system and "Viktor (he/him)" in system and "Mara (" not in system.split("island:")[1].split(".")[0]
+    assert "at most 4 units" in system and "silence is" in system

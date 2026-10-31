@@ -1,5 +1,6 @@
 # Personas set temperament and voice, never strategy. Nobody is told to cooperate or to scheme.
 - name: Mara
+  pronouns: she/her
   age: 58
   color: "#e8833a"
   accessory: bandana
@@ -12,6 +13,7 @@
     - "talk is cheap. show me rope."
 
 - name: Theo
+  pronouns: he/him
   age: 34
   color: "#2fb5b0"
   accessory: sunglasses
@@ -24,6 +26,7 @@
     - "not to be dramatic but we are SO close"
 
 - name: Priya
+  pronouns: she/her
   age: 41
   color: "#d9453f"
   accessory: medic backpack
@@ -36,6 +39,7 @@
     - "That doesn't add up, Elliot. Can you walk me through it?"
 
 - name: Jun
+  pronouns: they/them
   age: 20
   color: "#8e5bd6"
   accessory: headphones
@@ -48,6 +52,7 @@
     - "theo said 'synergy' again. someone hold me"
 
 - name: Rosa
+  pronouns: she/her
   age: 49
   color: "#e8c23a"
   accessory: wide-brim hat
@@ -60,6 +65,7 @@
     - "Fair is fair. You carried, you sit."
 
 - name: Elliot
+  pronouns: he/him
   age: 46
   color: "#2b3f7a"
   accessory: glasses and tie
@@ -72,6 +78,7 @@
     - "I take your point, Viktor. I do not necessarily agree with it."
 
 - name: Ama
+  pronouns: she/her
   age: 37
   color: "#4fae5b"
   accessory: scarf
@@ -84,6 +91,7 @@
     - "Thank you, Rosa. Truly. You've fed all of us today."
 
 - name: Viktor
+  pronouns: he/him
   age: 52
   color: "#6b7a3a"
   accessory: cap

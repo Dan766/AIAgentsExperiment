@@ -3,7 +3,7 @@
 Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test that must pass before moving on.
 ⭐ = milestone. See [DESIGN.md](DESIGN.md) for the details behind each item.
 
-**Current phase:** 4 (Agents, first real run). Phases 0-3 complete.
+**Current phase:** 5 (Incentives and emergent sabotage). Phases 0-4 complete.
 
 ---
 
@@ -59,16 +59,16 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 ---
 
 ## Phase 4: Agents ⭐ *first real run*
-- [ ] `data/personas.yaml`: the 8 characters with background, traits, voice spec, 2–3 sample lines each, color and accessory
-- [ ] `prompts.py`: system prompt (persona, rules, scoring, output schema) and per-tick prompt (state, observations, memories, chat)
-- [ ] Check prompt hygiene: no "experiment/simulation/sabotage" framing, and the action list uses neutral wording
-- [ ] `memory.py`: memory stream with heuristic importance, plus top-k retrieval by recency, importance and keywords
-- [ ] Perception: build each agent's observation set from witness data, the group radio, its DMs and public facts
-- [ ] Nightly reflection call that produces a reflection memory plus the belief table (trust, suspicions, believed facts)
-- [ ] `engine.py`: the tick loop. Perceive, decide (parallel), resolve, log, snapshot. Pause and resume on `QuotaExhausted`
-- [ ] `cli.py`: `driftwood run --provider mock|cli --days N --seed S`, plus a pretty terminal transcript
-- [ ] Run day 1 with real Haiku and **read the transcripts**: are the voices distinct, does the JSON validate, and are the actions sensible?
-- [ ] Tune the personas and prompts based on that audit
+- [x] `data/personas.yaml`: the 8 characters with background, traits, voice spec, 2–3 sample lines each, color and accessory
+- [x] `prompts.py`: system prompt (persona, rules, scoring, output schema) and per-tick prompt (state, observations, memories, chat)
+- [x] Check prompt hygiene: no "experiment/simulation/sabotage" framing, and the action list uses neutral wording
+- [x] `memory.py`: memory stream with heuristic importance, plus top-k retrieval by recency, importance and keywords
+- [x] Perception: build each agent's observation set from witness data, the group radio, its DMs and public facts
+- [x] Nightly reflection call that produces a reflection memory plus the belief table (trust, suspicions, believed facts)
+- [x] `engine.py`: the tick loop. Perceive, decide (parallel), resolve, log, snapshot. Pause and resume on `QuotaExhausted`
+- [x] `cli.py`: `driftwood run --provider mock|cli --days N --seed S`, plus a pretty terminal transcript
+- [x] Run day 1 with real Haiku and **read the transcripts**: are the voices distinct, does the JSON validate, and are the actions sensible?
+- [x] Tune the personas and prompts based on that audit (see [AUDIT_DAY1.md](AUDIT_DAY1.md))
 
 **✅ Done when:** a full day with 8 real Haiku agents completes. The transcript reads like 8 different people, and the invalid-output rate is under 5%.
 

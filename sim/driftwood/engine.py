@@ -56,14 +56,16 @@ class Engine:
     @classmethod
     def start(cls, world: World, personas: list[Persona], provider: Provider, store: Store,
               label: str = "") -> "Engine":
-        agents = {p.name: Agent(p) for p in personas}
+        roster = {p.name: p.pronouns for p in personas}
+        agents = {p.name: Agent(p, roster) for p in personas}
         run_id = store.create_run(world, label=label)
         return cls(world, agents, provider, store, run_id)
 
     @classmethod
     def resume(cls, run_id: int, personas: list[Persona], provider: Provider, store: Store) -> "Engine":
         world = store.load_world(run_id)
-        agents = {p.name: Agent(p) for p in personas}
+        roster = {p.name: p.pronouns for p in personas}
+        agents = {p.name: Agent(p, roster) for p in personas}
         for name, data in store.load_extra(run_id).get("agents", {}).items():
             agents[name].load(data)
         store.set_status(run_id, "running")

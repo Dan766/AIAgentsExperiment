@@ -6,6 +6,7 @@ from .config import DATA_DIR
 
 class Persona(BaseModel):
     name: str
+    pronouns: str
     age: int
     color: str
     accessory: str

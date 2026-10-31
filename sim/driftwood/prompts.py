@@ -35,9 +35,10 @@ ACTIONS = """ACTIONS (pick exactly one per turn; a failed action just wastes the
   {"type":"vote","names":["<6 different names>"]}   only when a ballot is called"""
 
 
-def system_prompt(p: Persona, world: World) -> str:
+def system_prompt(p: Persona, world: World, roster: dict[str, str] | None = None) -> str:
     sc = world.scenario
-    names = ", ".join(n for n in world.agents if n != p.name)
+    roster = roster or {}
+    names = ", ".join(f"{n} ({roster[n]})" if n in roster else n for n in world.agents if n != p.name)
     recipe = ", ".join(f"{c}: {r.need} {r.resource}" for c, r in sc.recipe.items())
     places = "\n".join(f"  - {k}: {v}" for k, v in PLACES.items())
     samples = "\n".join(f'    "{s}"' for s in p.samples)
@@ -75,7 +76,10 @@ want off the island too.
 WHAT YOU KNOW: only what you have seen yourself, been told over the radio, or remember. You do not see what happens
 where you are not, other people's pockets, or their private messages.
 
-EACH TURN you take one action and may send up to 2 messages.
+EACH TURN you take one action and may send up to 2 messages. You do not have to speak every turn: silence is
+normal, and people mostly talk when they have something to say. Everyone acts at the same moment, so what you read
+about others is what they did or said before this turn, and a plan someone announces may not have happened yet.
+A single build action adds at most {sc.build_rate} units to a component, however much you carry.
 
 {ACTIONS}
 

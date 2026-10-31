@@ -34,7 +34,7 @@ def print_report(r: TickReport, show_thoughts: bool):
             ok = "" if (ev and ev.ok) else f"  [FAILED: {ev.reason if ev else '?'}]"
             print(f"  {name:8} {a.type} {DETAIL.get(a.type, lambda x: '')(a)}{ok}")
         if show_thoughts and turn.thought:
-            print(f"           (thinks) {turn.thought}")
+            print(f"           {name} (thinks) {turn.thought}" if r.phase == "night" else f"           (thinks) {turn.thought}")
     for m in r.messages:
         ch = "" if m["channel"] == "group" else f" -> {m['channel'][3:]} (private)"
         print(f"  [radio] {m['sender']}{ch}: {m['text']}")
@@ -107,6 +107,8 @@ def main(argv=None):
     r.add_argument("--label", default="")
     r.add_argument("--thoughts", action="store_true", help="also print private thoughts")
     args = ap.parse_args(argv)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     Path(args.db).parent.mkdir(parents=True, exist_ok=True)
     Path(args.cache).parent.mkdir(parents=True, exist_ok=True)
     sys.exit(asyncio.run(cmd_run(args)))

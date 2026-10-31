@@ -27,8 +27,9 @@ class Agent:
     decide() and reflect() are pure (they only read state) so the engine can discard a tick if a usage
     limit interrupts it; commit_*() apply the results afterwards."""
 
-    def __init__(self, persona: Persona):
+    def __init__(self, persona: Persona, roster: dict[str, str] | None = None):
         self.persona = persona
+        self.roster = roster or {}
         self.name = persona.name
         self.memory = MemoryStream()
         self.beliefs: dict = {}
@@ -46,14 +47,14 @@ class Agent:
         vote_open = world.tick == world.scenario.vote_tick
         user = prompts.turn_prompt(world, self.name, obs, inbox, memories, self.beliefs,
                                    world.caches.get(self.name, {}), vote_open)
-        return prompts.system_prompt(self.persona, world), user
+        return prompts.system_prompt(self.persona, world, self.roster), user
 
     async def decide(self, world: World, provider: Provider, log: LogFn | None = None) -> JsonResult[AgentTurn]:
         system, user = self.build_prompts(world)
         return await call_json(provider, system, user, AgentTurn, log)
 
     async def reflect(self, world: World, provider: Provider, log: LogFn | None = None) -> JsonResult[Reflection]:
-        system = prompts.system_prompt(self.persona, world)
+        system = prompts.system_prompt(self.persona, world, self.roster)
         recent = self.memory.items[-24:]
         return await call_json(provider, system, prompts.reflection_prompt(world, self.name, recent, self.beliefs),
                                Reflection, log)
