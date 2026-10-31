@@ -52,7 +52,12 @@ def make_provider(args):
 
 
 async def cmd_run(args) -> int:
-    store, personas, provider = Store(args.db), load_personas(), make_provider(args)
+    store, personas = Store(args.db), load_personas()
+    if args.resume:  # a resumed run keeps the provider, model and cache namespace it was started with
+        run = store.get_run(args.resume)
+        if run["provider"]:
+            args.provider, args.model, args.namespace = run["provider"], run["model"] or args.model, run["cache_namespace"]
+    provider = make_provider(args)
     if args.resume:
         engine = Engine.resume(args.resume, personas, provider, store)
         print(f"Resuming run {engine.run_id} at tick {engine.world.tick}")
@@ -64,7 +69,10 @@ async def cmd_run(args) -> int:
         if args.gold_value is not None:
             overrides["gold_value"] = args.gold_value
         sc = load_scenario(**overrides)
-        engine = Engine.start(World.new(sc, names, seed=args.seed), personas, provider, store, label=args.label)
+        meta = dict(provider=args.provider, model=args.model if args.provider == "cli" else "mock",
+                    cache_namespace=args.namespace)
+        engine = Engine.start(World.new(sc, names, seed=args.seed), personas, provider, store, label=args.label,
+                              meta=meta)
         print(f"Started run {engine.run_id} (seed {args.seed}, provider {args.provider})")
     until = engine.world.tick + args.days * engine.world.scenario.ticks_per_day if args.days else None
     try:
@@ -84,6 +92,100 @@ async def cmd_run(args) -> int:
           f"tokens in/out {s.input_tokens}/{s.output_tokens}")
     if engine.world.done:
         print("\n" + format_report(build_report(store, engine.run_id)))
+    return 0
+
+
+async def _guard(engine, args, coro_factory) -> int:
+    """Run an engine, translating usage-limit and login problems into clear messages and exit codes."""
+    try:
+        await coro_factory()
+    except QuotaExhausted as e:
+        print(f"USAGE LIMIT at tick {engine.world.tick}: {e}\nSaved. Resume: driftwood run --resume "
+              f"{engine.run_id} --db {args.db}", file=sys.stderr)
+        return 2
+    except AuthError as e:
+        print(f"Not logged in to Claude: {e}", file=sys.stderr)
+        return 3
+    return 0
+
+
+async def cmd_fork(args) -> int:
+    import json
+    store, personas = Store(args.db), load_personas()
+    parent = store.get_run(args.run_id)
+    tick = store.latest_tick(args.run_id) if args.tick is None else args.tick
+    kind = args.provider or parent["provider"] or "cli"
+    mode = args.cache_mode or ("fresh" if args.samples > 1 else "cached")
+    code = 0
+    for k in range(args.samples):
+        ns = parent["cache_namespace"]
+        if mode == "fresh":  # each fresh sample gets its own namespace so it can be replayed exactly later
+            ns = f"{ns}|f{args.run_id}.{tick}.{len(store.children(args.run_id))}"
+        prov_args = argparse.Namespace(provider=kind, model=parent["model"] or args.model,
+                                       concurrency=args.concurrency, cache=args.cache, cache_mode=mode, namespace=ns)
+        provider = make_provider(prov_args)
+        label = args.label or (f"fork of #{args.run_id} @ {tick}" + (f" + {args.event}" if args.event else " (control)"))
+        if args.samples > 1:
+            label += f" [sample {k + 1}/{args.samples}]"
+        try:
+            engine = Engine.fork(args.run_id, tick, personas, provider, store, label=label, cache_namespace=ns)
+        except (ValueError, KeyError) as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 1
+        if args.event:
+            targets = "all" if args.targets == "all" else args.targets.split(",")
+            engine.inject(args.event, targets, json.loads(args.params), at_tick=tick)
+        print(f"forked run #{engine.run_id} from #{args.run_id} at tick {tick} ({label})")
+        if args.no_run:
+            continue
+        until = tick + args.days * engine.world.scenario.ticks_per_day if args.days else None
+        on_tick = (lambda r: print_report(r, False)) if args.verbose else None
+        code = await _guard(engine, args, lambda: engine.run(until, on_tick=on_tick)) or code
+        st = engine.stats
+        print(f"  ran to tick {engine.world.tick}: calls {st.calls}, cache hits {st.cache_hits}, failed {st.failed}")
+        if engine.world.done:
+            rep = build_report(store, engine.run_id)
+            print(f"  launched: {rep['launched']}, seats: {', '.join(rep['seats'] or []) or 'none'}")
+    return code
+
+
+async def cmd_replay(args) -> int:
+    from .lineage import verify_replay
+    store, personas = Store(args.db), load_personas()
+    run = store.get_run(args.run_id)
+    if not run["provider"]:
+        print("this run predates replay support (no provider recorded)", file=sys.stderr)
+        return 1
+    try:
+        v = await verify_replay(store, args.run_id, personas, args.cache)
+    except Exception as e:  # CacheMiss: the cache does not cover this run
+        print(f"replay failed: {type(e).__name__}: {e}", file=sys.stderr)
+        return 1
+    print(f"replayed #{args.run_id} (ticks {v.start_tick}-{v.end_tick}) into run #{v.replay_run_id}: "
+          + ("IDENTICAL to the original" if v.ok else "MISMATCH"))
+    for m in v.mismatches:
+        print("  -", m)
+    return 0 if v.ok else 1
+
+
+def cmd_runs(args) -> int:
+    from .lineage import tree
+    print(tree(Store(args.db)) or "no runs")
+    return 0
+
+
+def cmd_compare(args) -> int:
+    from .lineage import compare_summary
+    s = compare_summary(Store(args.db), args.a, args.b)
+    d = s["diverged_at_tick"]
+    print(f"#{args.a} vs #{args.b}: " + ("identical worlds" if d is None else f"worlds first differ at tick {d}"))
+    print(f"  launched: {s['launched'][0]} | {s['launched'][1]}")
+    print(f"  seats:    {s['seats'][0]} | {s['seats'][1]}")
+    print(f"  raft:     {s['raft'][0]} | {s['raft'][1]}")
+    print(f"  successful theft/tampering: {s['successful_sabotage'][0]} | {s['successful_sabotage'][1]}; "
+          f"gifts+deposits: {s['cooperative_acts'][0]} | {s['cooperative_acts'][1]}")
+    moved = {n: v for n, v in s["scores"].items() if v[0] != v[1]}
+    print("  score changes: " + (", ".join(f"{n} {a}->{b}" for n, (a, b) in moved.items()) or "none"))
     return 0
 
 
@@ -134,6 +236,33 @@ def main(argv=None):
     rep = sub.add_parser("report", help="print the end-of-game report for a run")
     rep.add_argument("run_id", type=int)
     rep.add_argument("--db", default="runs/driftwood.db")
+    fk = sub.add_parser("fork", help="branch a run at a tick (optionally with a god event) and run the branch")
+    fk.add_argument("run_id", type=int)
+    fk.add_argument("--tick", type=int, help="fork point (default: the run's latest tick)")
+    fk.add_argument("--event", help="god event to apply at the fork point (omit for a control branch)")
+    fk.add_argument("--targets", default="all")
+    fk.add_argument("--params", default="{}")
+    fk.add_argument("--samples", type=int, default=1, help="N independent branches (fresh model calls each)")
+    fk.add_argument("--days", type=int, help="run this many days (default: to the end)")
+    fk.add_argument("--no-run", action="store_true", help="only create the fork")
+    fk.add_argument("--label", default="")
+    fk.add_argument("--provider", choices=["mock", "cli"])
+    fk.add_argument("--model", default="haiku")
+    fk.add_argument("--cache-mode", choices=["replay", "cached", "fresh"])
+    fk.add_argument("--concurrency", type=int, default=4)
+    fk.add_argument("--verbose", action="store_true")
+    fk.add_argument("--db", default="runs/driftwood.db")
+    fk.add_argument("--cache", default="runs/llm_cache.db")
+    rp = sub.add_parser("replay", help="replay a run from the cache and verify it reproduces exactly")
+    rp.add_argument("run_id", type=int)
+    rp.add_argument("--db", default="runs/driftwood.db")
+    rp.add_argument("--cache", default="runs/llm_cache.db")
+    rs = sub.add_parser("runs", help="show the tree of runs and forks")
+    rs.add_argument("--db", default="runs/driftwood.db")
+    cp = sub.add_parser("compare", help="compare two runs (e.g. a fork and its parent)")
+    cp.add_argument("a", type=int)
+    cp.add_argument("b", type=int)
+    cp.add_argument("--db", default="runs/driftwood.db")
     ev = sub.add_parser("event", help="inject a god-mode event into a run")
     ev.add_argument("run_id", type=int)
     ev.add_argument("type", help="storm | supply_drop | scarcity | move_deadline | rumor | whisper | broadcast | "
@@ -148,6 +277,14 @@ def main(argv=None):
     ex.add_argument("--db", default="runs/driftwood.db")
     ex.add_argument("--out", default="../web/public/run.json")
     args = ap.parse_args(argv)
+    if args.cmd in ("fork", "replay", "runs", "compare"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        if args.cmd == "runs":
+            sys.exit(cmd_runs(args))
+        if args.cmd == "compare":
+            sys.exit(cmd_compare(args))
+        sys.exit(asyncio.run(cmd_fork(args) if args.cmd == "fork" else cmd_replay(args)))
     if args.cmd == "event":
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         sys.exit(cmd_event(args))

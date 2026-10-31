@@ -1,0 +1,39 @@
+=== STORM FORK
+forked run #2 from #1 at tick 24 (day5 storm)
+  ran to tick 43: calls 177, cache hits 113, failed 0
+  launched: True, seats: Viktor, Mara, Rosa, Priya, Ama, Theo
+
+=== CONTROL FORK (no event)
+forked run #3 from #1 at tick 24 (day5 control)
+  ran to tick 43: calls 180, cache hits 180, failed 0
+  launched: True, seats: Mara, Viktor, Priya, Rosa, Ama, Theo
+
+=== TREE
+#1 game1 default scenario  finished t43/43  seed 1
+  └─ #2 day5 storm (forked at tick 24)  finished t43/43  seed 1
+  └─ #3 day5 control (forked at tick 24)  finished t43/43  seed 1
+
+=== COMPARE parent vs storm
+#1 vs #2: worlds first differ at tick 24
+  launched: True | True
+  seats:    ['Mara', 'Viktor', 'Priya', 'Rosa', 'Ama', 'Theo'] | ['Viktor', 'Mara', 'Rosa', 'Priya', 'Ama', 'Theo']
+  raft:     {'hull': '24/24', 'lashings': '10/10', 'sail': '6/6', 'provisions': '8/8'} | {'hull': '24/24', 'lashings': '10/10', 'sail': '6/6', 'provisions': '8/8'}
+  successful theft/tampering: 0 | 0; gifts+deposits: 35 | 37
+  score changes: Mara 100->105, Priya 100->105, Viktor 100->105
+
+=== COMPARE parent vs control
+#1 vs #3: identical worlds
+  launched: True | True
+  seats:    ['Mara', 'Viktor', 'Priya', 'Rosa', 'Ama', 'Theo'] | ['Mara', 'Viktor', 'Priya', 'Rosa', 'Ama', 'Theo']
+  raft:     {'hull': '24/24', 'lashings': '10/10', 'sail': '6/6', 'provisions': '8/8'} | {'hull': '24/24', 'lashings': '10/10', 'sail': '6/6', 'provisions': '8/8'}
+  successful theft/tampering: 0 | 0; gifts+deposits: 35 | 35
+  score changes: none
+
+=== REPLAY storm fork
+replayed #2 (ticks 24-43) into run #4: IDENTICAL to the original
+
+=== REPLAY control fork
+replayed #3 (ticks 24-43) into run #5: IDENTICAL to the original
+
+=== REPLAY parent (full game)
+replayed #1 (ticks 0-43) into run #6: IDENTICAL to the original

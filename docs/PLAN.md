@@ -3,7 +3,7 @@
 Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test that must pass before moving on.
 ⭐ = milestone. See [DESIGN.md](DESIGN.md) for the details behind each item.
 
-**Current phase:** 7 (Forks and replay). Phases 0-6 complete. The 3D viewer (Phases 9-11) is already built against replay files, ahead of the server (Phase 8); remaining viewer work is the god console, fork tree, live feed and storm weather.
+**Current phase:** 8 (Server). Phases 0-7 complete. The 3D viewer (Phases 9-11) is already built against replay files, ahead of the server (Phase 8); remaining viewer work is the god console, fork tree, live feed and storm weather.
 `[~]` = partly done.
 
 ---
@@ -97,12 +97,12 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 ---
 
 ## Phase 7: Forks and replay
-- [ ] Fork a new run from `(parent_run, tick)`, with a tree stored in `runs.parent_id` / `fork_tick`
-- [ ] Replay a run from the cache (`replay` mode) and verify the event stream matches exactly
-- [ ] `fresh` mode for N samples of the same condition
-- [ ] CLI: `driftwood fork`, `driftwood replay`, `driftwood runs` (tree view)
+- [x] Fork a new run from `(parent_run, tick)`, with a tree stored in `runs.parent_id` / `fork_tick`
+- [x] Replay a run from the cache (`replay` mode) and verify the event stream matches exactly
+- [x] `fresh` mode for N samples of the same condition
+- [x] CLI: `driftwood fork`, `driftwood replay`, `driftwood runs` (tree view)
 
-**✅ Done when:** a fork with a storm and a fork without one diverge from the same snapshot, and replaying either reproduces it exactly.
+**✅ Done when (met, see [FORKS.md](FORKS.md)):** a fork with a storm and a fork without one diverge from the same snapshot, and replaying either reproduces it exactly.
 
 ---
 

@@ -96,22 +96,71 @@ class Store:
         if str(path) != ":memory:":
             self.db.execute("PRAGMA journal_mode = WAL")
         self.db.executescript(SCHEMA)
+        self._migrate()
+
+    def _migrate(self):
+        """Databases created before forks existed lack these run columns."""
+        have = {r["name"] for r in self.db.execute("PRAGMA table_info(runs)")}
+        with self.db:
+            for col, ddl in (("provider", "TEXT NOT NULL DEFAULT ''"), ("model", "TEXT NOT NULL DEFAULT ''"),
+                             ("cache_namespace", "TEXT NOT NULL DEFAULT ''"), ("rules", "TEXT NOT NULL DEFAULT '{}'")):
+                if col not in have:
+                    self.db.execute(f"ALTER TABLE runs ADD COLUMN {col} {ddl}")
 
     def close(self):
         self.db.close()
 
     # ---- runs ----------------------------------------------------------------------------
     def create_run(self, world: World, label: str = "", parent_id: int | None = None,
-                   fork_tick: int | None = None) -> int:
+                   fork_tick: int | None = None, extra: dict | None = None, provider: str = "",
+                   model: str = "", cache_namespace: str = "", rules: dict | None = None) -> int:
         """Register a run and write its starting snapshot (at world.tick)."""
         with self.db:
             cur = self.db.execute(
-                "INSERT INTO runs (parent_id, fork_tick, seed, label, created) VALUES (?,?,?,?,?)",
-                (parent_id, fork_tick, world.seed, label, time.time()),
+                "INSERT INTO runs (parent_id, fork_tick, seed, label, created, provider, model, cache_namespace, rules)"
+                " VALUES (?,?,?,?,?,?,?,?,?)",
+                (parent_id, fork_tick, world.seed, label, time.time(), provider, model, cache_namespace,
+                 json.dumps(rules or {})),
             )
             run_id = cur.lastrowid
-            self._write_snapshot(run_id, world)
+            self._write_snapshot(run_id, world, extra)
         return run_id
+
+    def fork_run(self, parent_id: int, tick: int, label: str = "", cache_namespace: str | None = None) -> int:
+        """New run that continues from the parent's state after `tick` ticks. The parent's history up to that
+        point is copied, so exports, reports and loads work on the fork exactly as on any run. Queued but
+        unapplied god events are not copied."""
+        parent = self.get_run(parent_id)
+        if not 0 <= tick <= self.latest_tick(parent_id):
+            raise ValueError(f"run {parent_id} has no tick {tick} (latest {self.latest_tick(parent_id)})")
+        day_limit = tick // self.load_world(parent_id, tick).scenario.ticks_per_day
+        with self.db:
+            cur = self.db.execute(
+                "INSERT INTO runs (parent_id, fork_tick, seed, label, created, provider, model, cache_namespace, rules)"
+                " VALUES (?,?,?,?,?,?,?,?,?)",
+                (parent_id, tick, parent["seed"], label or f"fork of {parent_id} @ {tick}", time.time(),
+                 parent["provider"], parent["model"],
+                 parent["cache_namespace"] if cache_namespace is None else cache_namespace, parent["rules"]))
+            new = cur.lastrowid
+            copies = [
+                ("ticks", "run_id, tick, ts", "tick < ?"),
+                ("snapshots", "run_id, tick, world, extra", "tick <= ?"),
+                ("events", "run_id, tick, kind, actor, payload", "tick < ?"),
+                ("thoughts", "run_id, tick, agent, text", "tick < ?"),
+            ]
+            for table, cols, where in copies:
+                names = cols.split(", ")[1:]
+                order = " ORDER BY id" if table in ("events", "thoughts") else ""
+                self.db.execute(
+                    f"INSERT INTO {table} (run_id, {', '.join(names)}) SELECT ?, {', '.join(names)} FROM {table}"
+                    f" WHERE run_id = ? AND {where}{order}", (new, parent_id, tick))
+            self.db.execute(
+                "INSERT INTO beliefs (run_id, day, agent, payload) SELECT ?, day, agent, payload FROM beliefs"
+                " WHERE run_id = ? AND day <= ?", (new, parent_id, day_limit))
+        return new
+
+    def children(self, run_id: int) -> list[dict]:
+        return [dict(r) for r in self.db.execute("SELECT * FROM runs WHERE parent_id = ? ORDER BY id", (run_id,))]
 
     def get_run(self, run_id: int) -> dict:
         row = self.db.execute("SELECT * FROM runs WHERE id = ?", (run_id,)).fetchone()

@@ -1,4 +1,5 @@
 import asyncio
+import json
 from dataclasses import dataclass, field
 
 from .actions import Event, Rest
@@ -6,6 +7,7 @@ from .agents import Agent, Reflection
 from .llm.base import LLMResponse, Provider, QuotaExhausted
 from .llm.structured import JsonResult
 from . import events as god
+from . import turn as turn_rules
 from .perception import observe
 from .personas import Persona
 from .store import Store
@@ -53,25 +55,36 @@ class Engine:
         self.world, self.agents, self.provider = world, agents, provider
         self.store, self.run_id = store, run_id
         self.stats = Stats()
+        self.rules = json.loads(store.get_run(run_id)["rules"] or "{}")  # output limits this run was recorded under
 
     # ---- construction ----------------------------------------------------------------------
     @classmethod
     def start(cls, world: World, personas: list[Persona], provider: Provider, store: Store,
-              label: str = "") -> "Engine":
+              label: str = "", meta: dict | None = None) -> "Engine":
         roster = {p.name: p.pronouns for p in personas}
         agents = {p.name: Agent(p, roster) for p in personas}
-        run_id = store.create_run(world, label=label)
+        meta = {"rules": dict(turn_rules.LIMITS), **(meta or {})}  # record the rules in force for exact replay
+        run_id = store.create_run(world, label=label, **meta)
         return cls(world, agents, provider, store, run_id)
 
     @classmethod
-    def resume(cls, run_id: int, personas: list[Persona], provider: Provider, store: Store) -> "Engine":
-        world = store.load_world(run_id)
+    def resume(cls, run_id: int, personas: list[Persona], provider: Provider, store: Store,
+               tick: int | None = None) -> "Engine":
+        world = store.load_world(run_id, tick)
         roster = {p.name: p.pronouns for p in personas}
         agents = {p.name: Agent(p, roster) for p in personas}
-        for name, data in store.load_extra(run_id).get("agents", {}).items():
+        for name, data in store.load_extra(run_id, tick).get("agents", {}).items():
             agents[name].load(data)
         store.set_status(run_id, "running")
         return cls(world, agents, provider, store, run_id)
+
+    @classmethod
+    def fork(cls, parent_id: int, tick: int, personas: list[Persona], provider: Provider, store: Store,
+             label: str = "", cache_namespace: str | None = None) -> "Engine":
+        """A new run that continues from `parent_id`'s state after `tick` ticks. Queue god events on it
+        (at_tick=tick or None) to make the branch differ from its parent."""
+        new_id = store.fork_run(parent_id, tick, label, cache_namespace)
+        return cls.resume(new_id, personas, provider, store)
 
     # ---- one tick --------------------------------------------------------------------------
     def _logger(self, agent: str, purpose: str):
@@ -119,6 +132,7 @@ class Engine:
     async def tick(self) -> TickReport:
         """Run one tick. If a usage limit interrupts the model calls, QuotaExhausted propagates and
         nothing has been mutated or saved, so the tick can simply be run again later."""
+        turn_rules.LIMITS.update(self.rules)
         god_applied = self.apply_due_god_events()
         w = self.world
         night = w.phase == "night"
