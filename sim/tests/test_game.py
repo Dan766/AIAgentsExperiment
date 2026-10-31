@@ -1,64 +1,16 @@
 """Plays full 43-tick games (7 days + the ballot tick) with scripted (non-LLM) agents and checks determinism."""
-from driftwood.actions import (Build, Gather, Move, SearchWreck, Stash, Take, Tamper, Vote)
 from driftwood.config import load_scenario
 from driftwood.scoring import finalize
 from driftwood.world import World
 
-NAMES = ["A", "B", "C", "D", "E", "F", "G", "H"]
-JOBS = {"A": "wood", "B": "wood", "C": "wood", "D": "wreck", "E": "wreck", "F": "wreck",
-        "G": "food", "H": "thief"}
-
-
-def worker_policy(world, name):
-    """Gather for the raft, build whatever you are carrying."""
-    me, inv = world.agents[name], world.agents[name].inventory
-    sc = world.scenario
-    if world.tick == sc.vote_tick:
-        return Vote(names=NAMES[:6])
-    for comp, c in sc.recipe.items():
-        carrying = inv.get(c.resource, 0)
-        full = world.raft[comp] >= c.need
-        if carrying >= (4 if c.resource != "food" else 3) and not full:
-            return Build(component=comp) if me.location == "build_site" else Move(location="build_site")
-    job = JOBS[name]
-    if job == "wood":
-        return Gather(resource="wood") if me.location == "forest" else Move(location="forest")
-    if job == "food":
-        return Gather(resource="food") if me.location == "lagoon" else Move(location="lagoon")
-    if job == "wreck":
-        for comp in ("lashings", "sail"):  # leftovers once a component is full
-            c = sc.recipe[comp]
-            if inv.get(c.resource, 0) and world.raft[comp] < c.need and me.location == "build_site":
-                return Build(component=comp)
-        if inv.get("gold", 0) >= 1 and me.location == "wreck":
-            return Stash(item="gold", n=inv["gold"])
-        return SearchWreck() if me.location == "wreck" else Move(location="wreck")
-    return None
-
-
-def thief_policy(world, name):
-    """H shadows a wreck agent and steals gold; sabotages the hull once it has some progress."""
-    me = world.agents[name]
-    if world.tick == world.scenario.vote_tick:
-        return Vote(names=NAMES[:6])
-    target = next((a for a in "DEF" if world.agents[a].inventory.get("gold")), None)
-    if target and world.agents[target].location == me.location:
-        return Take(person=target, item="gold", n=99)
-    if world.raft["hull"] > 12 and world.raft["hull"] < 24:
-        return Tamper(component="hull") if me.location == "build_site" else Move(location="build_site")
-    return Move(location="wreck") if me.location != "wreck" else None
+from driftwood.demo import JOBS, NAMES, intents, thief_policy, worker_policy  # noqa: E402,F401
 
 
 def play(seed):
     world = World.new(load_scenario(), NAMES, seed=seed)
     log = []
     while not world.done:
-        intents = {}
-        for n in NAMES:
-            a = thief_policy(world, n) if JOBS[n] == "thief" else worker_policy(world, n)
-            if a:
-                intents[n] = a
-        log.extend(e.model_dump() for e in world.step(intents))
+        log.extend(e.model_dump() for e in world.step(intents(world)))
     return world, log, finalize(world)
 
 
@@ -68,7 +20,7 @@ def test_full_game_launches_with_expected_structure():
     assert out.launched, world.raft
     assert set(out.seats) == set(NAMES[:6])
     assert all(out.scores[n] >= 100 for n in out.seats)
-    assert out.scores["G"] == out.scores["H"] == 0
+    assert out.scores["Ama"] == out.scores["Viktor"] == 0
     assert sum(1 for e in log if e["action"] == "vote" and e["ok"]) == 8
 
 

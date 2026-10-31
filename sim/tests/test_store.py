@@ -5,23 +5,15 @@ from driftwood.scoring import finalize
 from driftwood.store import Store
 from driftwood.world import World
 
-from .test_game import JOBS, NAMES, thief_policy, worker_policy
-
-
-def intents(world):
-    out = {}
-    for n in NAMES:
-        a = thief_policy(world, n) if JOBS[n] == "thief" else worker_policy(world, n)
-        if a:
-            out[n] = a
-    return out
+from driftwood.demo import NAMES
+from driftwood.demo import intents as scripted_intents
 
 
 def play_into(store, run_id, world, until=None):
     """Advance `world` to tick `until` (or the end), saving every tick. Returns all events."""
     log = []
     while not world.done and (until is None or world.tick < until):
-        events = world.step(intents(world))
+        events = world.step(scripted_intents(world))
         store.save_tick(run_id, world, events, thoughts=[("A", f"thinking at {world.tick}")])
         log.extend(e.model_dump() for e in events)
     return log

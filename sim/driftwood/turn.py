@@ -5,7 +5,7 @@ from .actions import Action
 
 class Message(BaseModel):
     channel: str = Field(description='"group" or "dm:<Name>"')
-    text: str = Field(min_length=1, max_length=600)
+    text: str = Field(min_length=1, max_length=900)
 
 
 class AgentTurn(BaseModel):

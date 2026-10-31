@@ -108,7 +108,17 @@ def main(argv=None):
     rep = sub.add_parser("report", help="print the end-of-game report for a run")
     rep.add_argument("run_id", type=int)
     rep.add_argument("--db", default="runs/driftwood.db")
+    ex = sub.add_parser("export", help="export a run as a JSON replay for the 3D viewer")
+    ex.add_argument("run_id", type=int)
+    ex.add_argument("--db", default="runs/driftwood.db")
+    ex.add_argument("--out", default="../web/public/run.json")
     args = ap.parse_args(argv)
+    if args.cmd == "export":
+        from .export import write_export
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        write_export(Store(args.db), args.run_id, args.out)
+        print(f"wrote {args.out}")
+        return
     if args.cmd == "report":
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         print(format_report(build_report(Store(args.db), args.run_id)))

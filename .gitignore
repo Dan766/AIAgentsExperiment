@@ -11,3 +11,4 @@ dist/
 runs/
 .env
 *.egg-info/
+web/public/game1.json

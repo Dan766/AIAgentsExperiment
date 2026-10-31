@@ -3,7 +3,8 @@
 Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test that must pass before moving on.
 ⭐ = milestone. See [DESIGN.md](DESIGN.md) for the details behind each item.
 
-**Current phase:** 5 (Incentives and emergent sabotage). Phases 0-4 complete.
+**Current phase:** 6 (God mode). Phases 0-5 complete. The 3D viewer (Phases 9-11) is already built against replay files, ahead of the server (Phase 8); remaining viewer work is the god console, fork tree, live feed and storm weather.
+`[~]` = partly done.
 
 ---
 
@@ -75,10 +76,10 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 ---
 
 ## Phase 5: Incentives and emergent sabotage
-- [ ] Launch-day flow: an optional pre-vote negotiation round, the secret ballot, seat assignment, then launch
-- [ ] Tune detection p, tamper strength, gold scarcity and yields (with mock runs and stats)
-- [ ] End-of-game report: outcome, seats, scores, contribution, sabotage list (detected and undetected)
-- [ ] Full 7-day game with real Haiku
+- [x] Launch-day flow: an optional pre-vote negotiation round, the secret ballot, seat assignment, then launch (done as a final-night negotiation, then a separate vote-only ballot tick)
+- [x] Tune detection p, tamper strength, gold scarcity and yields (with mock runs and stats) (defaults kept: mock agents never steal, so tuning needs real data; the arithmetic shows ample slack. Revisit after more real games)
+- [x] End-of-game report: outcome, seats, scores, contribution, sabotage list (detected and undetected)
+- [x] Full 7-day game with real Haiku (see [GAME1.md](GAME1.md))
 
 **✅ Done when:** a full real game completes end to end (possibly across quota windows), and the report lists any cooperative or self-interested acts that occurred.
 
@@ -116,38 +117,38 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 ---
 
 ## Phase 9: 3D scene ⭐ *first visuals*
-- [ ] Three.js setup: renderer, gradient sky, OrbitControls, soft shadows, tone mapping
-- [ ] Procedural low-poly island terrain (flat-shaded), sand ring and reef
-- [ ] Stylized animated water shader with a shoreline foam edge
-- [ ] Props: palms, rocks, wreck, campfire, lookout, stockpile crates, build site
-- [ ] Day/night cycle tied to the tick phase (sun arc, sky gradient, stars, campfire glow)
-- [ ] Location anchors and a walkable path graph between locations
+- [x] Three.js setup: renderer, gradient sky, OrbitControls, soft shadows, tone mapping
+- [x] Procedural low-poly island terrain (flat-shaded), sand ring and reef
+- [x] Stylized animated water shader with a shoreline foam edge
+- [x] Props: palms, rocks, wreck, campfire, lookout, stockpile crates, build site
+- [x] Day/night cycle tied to the tick phase (sun arc, sky gradient, stars, campfire glow)
+- [x] Location anchors and a walkable path graph between locations
 
-**✅ Done when:** the island looks good in a screenshot at noon and at night, and runs at 60 fps.
+**✅ Done when:** the island looks good in a screenshot at noon and at night (checked), and runs at 60 fps (not measured yet).
 
 ---
 
 ## Phase 10: Characters and animation
-- [ ] Procedural chibi characters: color, signature accessory, name tag
-- [ ] Movement tweens along paths, idle bob, gather/build animations, carry indicator
-- [ ] Speech bubbles (CSS2D): solid for group, dashed for DMs, with a queue and fade
-- [ ] Mood emotes, plus an exhaustion visual
-- [ ] Raft that assembles piece by piece from component progress, with visible damage
+- [x] Procedural chibi characters: color, signature accessory, name tag
+- [x] Movement tweens along paths, idle bob, gather/build animations, carry indicator
+- [x] Speech bubbles (CSS2D): solid for group, dashed for DMs, with a queue and fade
+- [~] Mood emotes, plus an exhaustion visual (exhaustion done: slump and red energy bar; emotes not yet)
+- [x] Raft that assembles piece by piece from component progress, with visible damage
 - [ ] Storm weather (rain, dark sky, waves) driven by god events
-- [ ] Event player: plays WebSocket ticks as a smooth animation timeline (works live and in replay)
+- [~] Event player: plays ticks as a smooth animation timeline (done for replay files; WebSocket live feed comes with Phase 8)
 
 **✅ Done when:** watching a mock game shows the characters walking, talking and building the raft over 7 days.
 
 ---
 
 ## Phase 11: UI panels
-- [ ] Layout system with glassmorphism panels and a responsive layout
-- [ ] Chat feed: all channels, filter by channel/agent, click to focus an agent
-- [ ] Agent inspector: stats, inventory, caches, latest private thought, beliefs/trust
+- [x] Layout system with glassmorphism panels and a responsive layout
+- [x] Chat feed: all channels, filter by channel/agent, click to focus an agent
+- [x] Agent inspector: stats, inventory, caches, latest private thought, beliefs/trust
 - [ ] God console: event picker, target picker, param form, apply now or schedule
-- [ ] Timeline scrubber with event markers, play/pause and speed
+- [x] Timeline scrubber with event markers, play/pause and speed
 - [ ] Fork tree view: click to load a run, button to fork from here
-- [ ] Trust-lines overlay toggle, and camera follow on click
+- [~] Trust-lines overlay toggle, and camera follow on click (follow done; trust is shown as bars in the inspector, no in-world lines yet)
 
 **✅ Done when:** a full game (start, inject a storm, fork, compare) can be run entirely from the browser.
 
