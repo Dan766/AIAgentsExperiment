@@ -55,14 +55,14 @@ class Withdraw(BaseModel):
 
 class Give(BaseModel):
     type: Literal["give"] = "give"
-    agent: str
+    person: str
     item: str
     n: int = Field(1, ge=1)
 
 
 class Take(BaseModel):
     type: Literal["take"] = "take"
-    agent: str
+    person: str
     item: str
     n: int = Field(1, ge=1)
 
@@ -197,21 +197,21 @@ def resolve(world, name: str, action, rng: random.Random) -> Event:
             ev.data = {"item": action.item, "n": action.n}
             ev.public = dict(ev.data)
         elif t == "give":
-            _need(action.agent in others, f"{action.agent} is not here")
+            _need(action.person in others, f"{action.person} is not here")
             _take_item(agent.inventory, action.item, action.n)
-            _add_item(world.agents[action.agent].inventory, action.item, action.n)
-            ev.data = {"to": action.agent, "item": action.item, "n": action.n}
+            _add_item(world.agents[action.person].inventory, action.item, action.n)
+            ev.data = {"to": action.person, "item": action.item, "n": action.n}
             ev.public = dict(ev.data)
         elif t == "take":
-            _need(action.agent in others, f"{action.agent} is not here")
-            victim = world.agents[action.agent]
+            _need(action.person in others, f"{action.person} is not here")
+            victim = world.agents[action.person]
             _need(action.item in ITEMS, f"unknown item {action.item}")
             n = min(action.n, victim.inventory.get(action.item, 0))
-            _need(n > 0, f"{action.agent} has no {action.item}")
+            _need(n > 0, f"{action.person} has no {action.item}")
             _take_item(victim.inventory, action.item, n)
             _add_item(agent.inventory, action.item, n)
-            ev.victim = action.agent
-            ev.data = {"from": action.agent, "item": action.item, "n": n}
+            ev.victim = action.person
+            ev.data = {"from": action.person, "item": action.item, "n": n}
             # each bystander, and the victim, independently identifies the culprit
             ev.seen_by = [o for o in others if rng.random() < sc.take_detect_p]
             ev.public = {"item": action.item, "n": n}

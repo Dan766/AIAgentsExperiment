@@ -117,27 +117,27 @@ def test_deposit_withdraw_only_at_camp(world):
 def test_give_needs_colocation_and_items(world):
     put(world, "A", food=3)
     at(world, "forest", "B")
-    assert not run(world, "A", Give(agent="B", item="food", n=1)).ok
+    assert not run(world, "A", Give(person="B", item="food", n=1)).ok
     at(world, "forest", "A")
-    assert run(world, "A", Give(agent="B", item="food", n=2)).ok
+    assert run(world, "A", Give(person="B", item="food", n=2)).ok
     assert world.agents["B"].inventory["food"] == 2 and world.agents["A"].inventory["food"] == 1
-    assert not run(world, "A", Give(agent="B", item="food", n=5)).ok
+    assert not run(world, "A", Give(person="B", item="food", n=5)).ok
 
 
 def test_take_moves_items_and_detection_is_probabilistic(world):
     world.scenario.take_detect_p = 1.0
     put(world, "B", gold=4)
-    ev = run(world, "A", Take(agent="B", item="gold", n=9))  # takes what exists
+    ev = run(world, "A", Take(person="B", item="gold", n=9))  # takes what exists
     assert ev.ok and ev.data["n"] == 4 and ev.victim == "B"
     assert world.agents["A"].inventory["gold"] == 4 and "gold" not in world.agents["B"].inventory
     assert set(ev.seen_by) == set(NAMES) - {"A"}  # everyone at camp identified the thief
     world.scenario.take_detect_p = 0.0
     put(world, "B", gold=1)
-    ev = run(world, "A", Take(agent="B", item="gold"))
+    ev = run(world, "A", Take(person="B", item="gold"))
     assert ev.ok and ev.seen_by == []
-    assert not run(world, "A", Take(agent="B", item="gold")).ok  # nothing left
+    assert not run(world, "A", Take(person="B", item="gold")).ok  # nothing left
     at(world, "forest", "C")
-    assert not run(world, "A", Take(agent="C", item="wood")).ok  # not here
+    assert not run(world, "A", Take(person="C", item="wood")).ok  # not here
 
 
 def test_stash_is_private_and_hides_contents(world):

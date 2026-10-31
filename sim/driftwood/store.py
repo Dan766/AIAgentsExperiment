@@ -117,7 +117,8 @@ class Store:
 
     # ---- ticks ---------------------------------------------------------------------------
     def save_tick(self, run_id: int, world: World, events: Iterable[Event] = (),
-                  thoughts: Iterable[tuple[str, str]] = (), extra: dict | None = None):
+                  thoughts: Iterable[tuple[str, str]] = (), extra: dict | None = None,
+                  extra_events: Iterable[tuple[str, str | None, dict]] = ()):
         """Atomically record one finished tick. `world.tick` is already advanced, so the snapshot is
         stored under world.tick and the events under the tick that just ran (world.tick - 1)."""
         ran = world.tick - 1
@@ -126,6 +127,8 @@ class Store:
                             (run_id, ran, time.time()))
             for ev in events:
                 self._insert_event(run_id, ev.tick, "action", ev.actor, ev.model_dump_json())
+            for kind, actor, payload in extra_events:
+                self._insert_event(run_id, ran, kind, actor, json.dumps(payload))
             for agent, text in thoughts:
                 self.db.execute("INSERT INTO thoughts (run_id, tick, agent, text) VALUES (?,?,?,?)",
                                 (run_id, ran, agent, text))

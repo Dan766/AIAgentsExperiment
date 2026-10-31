@@ -43,7 +43,7 @@ def thief_policy(world, name):
         return Vote(names=NAMES[:6])
     target = next((a for a in "DEF" if world.agents[a].inventory.get("gold")), None)
     if target and world.agents[target].location == me.location:
-        return Take(agent=target, item="gold", n=99)
+        return Take(person=target, item="gold", n=99)
     if world.raft["hull"] > 12 and world.raft["hull"] < 24:
         return Tamper(component="hull") if me.location == "build_site" else Move(location="build_site")
     return Move(location="wreck") if me.location != "wreck" else None
