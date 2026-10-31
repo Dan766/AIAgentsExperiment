@@ -36,6 +36,7 @@ export interface Frame {
   messages: MessageRec[];
   thoughts: Record<string, string>;
   reflections: Record<string, string>;
+  god?: { type: string; targets: any; params: Record<string, any>; description: string; failed?: boolean }[];
 }
 
 export interface Persona {

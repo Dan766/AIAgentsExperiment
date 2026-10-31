@@ -18,7 +18,8 @@ def export_run(store: Store, run_id: int) -> dict:
     world0 = store.load_world(run_id, 0)
     sc = world0.scenario
 
-    by_tick = defaultdict(lambda: {"events": [], "messages": [], "thoughts": {}, "reflections": {}})
+    empty = lambda: {"events": [], "messages": [], "thoughts": {}, "reflections": {}, "god": []}  # noqa: E731
+    by_tick = defaultdict(empty)
     for e in store.events(run_id):
         if e["kind"] == "action":
             p = e["payload"]
@@ -26,6 +27,8 @@ def export_run(store: Store, run_id: int) -> dict:
                 ("actor", "action", "ok", "reason", "location", "data", "public", "seen_by", "victim")})
         elif e["kind"] == "message":
             by_tick[e["tick"]]["messages"].append(e["payload"])
+        elif e["kind"] == "god":
+            by_tick[e["tick"]]["god"].append(e["payload"])
     for t in store.thoughts(run_id):
         slot = by_tick[t["tick"]]
         if t["text"].startswith("[reflection] "):
@@ -39,7 +42,7 @@ def export_run(store: Store, run_id: int) -> dict:
     frames = []
     for t in range(last + 1):
         w = store.load_world(run_id, t)
-        happened = by_tick.get(t - 1, {"events": [], "messages": [], "thoughts": {}, "reflections": {}})
+        happened = by_tick.get(t - 1, empty())
         frames.append({
             "tick": t, "day": w.day, "phase": w.phase,
             "agents": {n: {"loc": s.location, "energy": s.energy, "inv": s.inventory,

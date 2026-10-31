@@ -60,6 +60,7 @@ export class Player {
       c.setEnergy(f.agents[name].energy);
       c.clearBubbles();
     }
+    this.view.weather.clear();
     this.view.raft.setProgress(f.raft, true);
     this.view.setStockpile(f.stockpile);
     this.view.setTod(gameTime(f) % 1);
@@ -101,6 +102,7 @@ export class Player {
     }
 
     f.events.forEach((ev) => this.animateEvent(ev, t0, dur, jitter(ev.actor)));
+    if ((f.god ?? []).some((g) => g.type === 'storm' && !g.failed)) this.view.weather.storm(dur * 2.2);
     this.at(t0, dur, 0.55, () => { this.view.raft.setProgress(f.raft); this.view.setStockpile(f.stockpile); });
 
     f.messages.forEach((m, i) => {

@@ -84,13 +84,23 @@ export class UI {
   private buildMarks(host: HTMLElement) {
     const n = this.player.last;
     this.replay.frames.forEach((f, i) => {
+      const god = (f.god ?? []).length > 0;
       const bad = f.events.some((e) => e.ok && (e.action === 'take' || e.action === 'tamper'));
       const vote = f.events.some((e) => e.action === 'vote');
       const newDay = i > 0 && f.phase === 'dawn';
-      if (!bad && !vote && !newDay) return;
-      const m = el(`<i class="${bad ? 'bad' : vote ? 'vote' : 'day'}" style="left:${(i / n) * 100}%" title="${bad ? 'sabotage' : vote ? 'ballot' : 'day ' + f.day}"></i>`);
+      if (!bad && !vote && !newDay && !god) return;
+      const kind = god ? 'god' : bad ? 'bad' : vote ? 'vote' : 'day';
+      const m = el(`<i class="${kind}" style="left:${(i / n) * 100}%" title="${god ? 'god event: ' + f.god![0].type : bad ? 'sabotage' : vote ? 'ballot' : 'day ' + f.day}"></i>`);
       host.appendChild(m);
     });
+  }
+
+  private toast(g: { type: string; description: string; failed?: boolean }) {
+    const icon: Record<string, string> = { storm: '⛈️', rumor: '🗣️', whisper: '🤫', broadcast: '📻', reveal: '🔦', supply_drop: '📦', scarcity: '🥀', move_deadline: '⏳', set_seats: '💺', edit_memory: '🧠', set_energy: '⚡', give_items: '🎁' };
+    const t = el(`<div class="toast ${g.failed ? 'bad' : ''}"><b>${icon[g.type] ?? '✨'} God: ${g.type.replace('_', ' ')}</b><span>${esc(g.description)}</span></div>`);
+    this.root.appendChild(t);
+    setTimeout(() => t.classList.add('out'), 5200);
+    setTimeout(() => t.remove(), 5800);
   }
 
   private syncPlay() { this.playBtn.textContent = this.player.playing ? '⏸' : '▶'; }
@@ -117,6 +127,7 @@ export class UI {
   }
   onSegmentStart(f: Frame, i: number) {
     this.shown = i;
+    (f.god ?? []).forEach((g) => this.toast(g));
     this.renderAll(f);
     this.banner.hidden = true;
   }

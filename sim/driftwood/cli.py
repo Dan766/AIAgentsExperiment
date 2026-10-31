@@ -87,6 +87,32 @@ async def cmd_run(args) -> int:
     return 0
 
 
+def cmd_event(args) -> int:
+    import json
+
+    from . import events as god
+    store = Store(args.db)
+    targets = "all" if args.targets == "all" else args.targets.split(",")
+    try:
+        params = json.loads(args.params)
+        engine = Engine.resume(args.run_id, load_personas(), None, store) if args.apply else None
+        names = list((engine.world if engine else store.load_world(args.run_id)).agents)
+        god.validate(args.type, params, targets, names)
+        if engine:
+            engine.inject(args.type, targets, params, args.at)
+            for p in engine.apply_due_god_events():
+                print(f"applied at tick {p['tick']}: {p['description']}")
+        else:
+            gid = store.add_god_event(args.run_id, args.type, targets, params, args.at)
+            when = f"tick {args.at}" if args.at is not None else "the start of the next tick"
+            print(f"queued event {gid} ({args.type}) for {when}. A running game applies it automatically; "
+                  f"a stopped one when resumed: driftwood run --resume {args.run_id}")
+    except (god.GodError, ValueError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="driftwood")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -108,11 +134,23 @@ def main(argv=None):
     rep = sub.add_parser("report", help="print the end-of-game report for a run")
     rep.add_argument("run_id", type=int)
     rep.add_argument("--db", default="runs/driftwood.db")
+    ev = sub.add_parser("event", help="inject a god-mode event into a run")
+    ev.add_argument("run_id", type=int)
+    ev.add_argument("type", help="storm | supply_drop | scarcity | move_deadline | rumor | whisper | broadcast | "
+                                 "reveal | set_seats | edit_memory | set_energy | give_items")
+    ev.add_argument("--targets", default="all", help='"all" or comma-separated names, e.g. Theo,Jun')
+    ev.add_argument("--params", default="{}", help="JSON object of event parameters")
+    ev.add_argument("--at", type=int, help="apply at the start of this tick (default: next tick)")
+    ev.add_argument("--apply", action="store_true", help="apply immediately to a stopped run")
+    ev.add_argument("--db", default="runs/driftwood.db")
     ex = sub.add_parser("export", help="export a run as a JSON replay for the 3D viewer")
     ex.add_argument("run_id", type=int)
     ex.add_argument("--db", default="runs/driftwood.db")
     ex.add_argument("--out", default="../web/public/run.json")
     args = ap.parse_args(argv)
+    if args.cmd == "event":
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.exit(cmd_event(args))
     if args.cmd == "export":
         from .export import write_export
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)

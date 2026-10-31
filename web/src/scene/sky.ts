@@ -46,6 +46,9 @@ export class Sky {
   /** 0 at noon, 1 at night: used by lamps and stars */
   night = 0;
   light = 1;
+  /** 0..1 storm intensity: greys and darkens the sky, flash adds lightning */
+  storm = 0;
+  flash = 0;
   fogColor = new THREE.Color();
   waterColor = new THREE.Color();
   deepColor = new THREE.Color();
@@ -109,8 +112,16 @@ export class Sky {
     const { a, b, f } = this.sample(t);
     const mix = (x: string, y: string) => new THREE.Color(x).lerp(new THREE.Color(y), f);
     const top = mix(a.top, b.top), bottom = mix(a.bottom, b.bottom), sunC = mix(a.sun, b.sun);
-    const sunI = a.sunI + (b.sunI - a.sunI) * f, hemiI = a.hemiI + (b.hemiI - a.hemiI) * f;
+    let sunI = a.sunI + (b.sunI - a.sunI) * f, hemiI = a.hemiI + (b.hemiI - a.hemiI) * f;
     this.light = a.light + (b.light - a.light) * f;
+    if (this.storm > 0) {
+      top.lerp(new THREE.Color('#38414d'), this.storm * 0.8);
+      bottom.lerp(new THREE.Color('#58626f'), this.storm * 0.75);
+      sunI *= 1 - 0.7 * this.storm;
+      hemiI *= 1 - 0.2 * this.storm;
+      this.light *= 1 - 0.32 * this.storm;
+    }
+    hemiI += this.flash * 2.2;
     this.waterColor.copy(mix(a.water, b.water));
     this.deepColor.copy(mix(a.deep, b.deep));
 

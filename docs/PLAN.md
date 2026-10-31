@@ -86,11 +86,11 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 ---
 
 ## Phase 6: God mode
-- [ ] `events.py`: event model plus handlers for storm, supply_drop, scarcity, move_deadline, rumor, whisper, broadcast, reveal, set_seats, edit_memory, give_items, set_energy
-- [ ] Scheduler: apply now or at tick N, with targets (all / list / one)
-- [ ] Events are logged and shown in agent observations where appropriate (e.g. agents see a storm, but not a memory edit)
-- [ ] CLI: `driftwood event <run> <type> --targets ... --params ... [--at tick]`
-- [ ] Tests for each handler
+- [x] `events.py`: event model plus handlers for storm, supply_drop, scarcity, move_deadline, rumor, whisper, broadcast, reveal, set_seats, edit_memory, give_items, set_energy
+- [x] Scheduler: apply now or at tick N, with targets (all / list / one)
+- [x] Events are logged and shown in agent observations where appropriate (e.g. agents see a storm, but not a memory edit)
+- [x] CLI: `driftwood event <run> <type> --targets ... --params ... [--at tick]`
+- [x] Tests for each handler
 
 **✅ Done when:** a rumor injected into one agent visibly spreads through the chat in a real run.
 
@@ -134,7 +134,7 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 - [x] Speech bubbles (CSS2D): solid for group, dashed for DMs, with a queue and fade
 - [~] Mood emotes, plus an exhaustion visual (exhaustion done: slump and red energy bar; emotes not yet)
 - [x] Raft that assembles piece by piece from component progress, with visible damage
-- [ ] Storm weather (rain, dark sky, waves) driven by god events
+- [x] Storm weather (rain, dark sky, waves, lightning) driven by god events
 - [~] Event player: plays ticks as a smooth animation timeline (done for replay files; WebSocket live feed comes with Phase 8)
 
 **✅ Done when:** watching a mock game shows the characters walking, talking and building the raft over 7 days.

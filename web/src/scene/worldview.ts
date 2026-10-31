@@ -8,6 +8,7 @@ import { Raft } from './raft';
 import { Sky } from './sky';
 import { ANCHORS, buildTerrain, heightAt } from './terrain';
 import { Water } from './water';
+import { Weather } from './weather';
 
 const BUILD_RAFT_OFFSET = { x: 2.6, z: 0.9 };
 
@@ -19,6 +20,7 @@ export class WorldView {
   controls: OrbitControls;
   sky: Sky;
   water: Water;
+  weather: Weather;
   raft: Raft;
   characters = new Map<string, Character>();
   selected: string | null = null;
@@ -60,6 +62,7 @@ export class WorldView {
     this.sky = new Sky(this.scene);
     this.water = new Water();
     this.scene.add(this.water.mesh);
+    this.weather = new Weather(this.scene);
     this.scene.add(buildTerrain());
     this.buildProps(replay);
 
@@ -186,8 +189,14 @@ export class WorldView {
 
   onFrame(fn: (dt: number, time: number) => void) { this.hooks.push(fn); }
 
+  private lastTod = 0.45;
+  private lastStorm = -1;
   setTod(tod: number) {
+    this.lastTod = tod;
+    this.sky.storm = this.weather.level;
+    this.sky.flash = this.weather.flash;
     this.sky.update(tod, this.focus);
+    this.water.mat.uniforms.uStorm.value = this.weather.level;
     const u = this.water.mat.uniforms;
     u.uShallow.value.copy(this.sky.waterColor);
     u.uDeep.value.copy(this.sky.deepColor);
@@ -206,6 +215,8 @@ export class WorldView {
       this.time += dt;
       const t = this.time;
       this.water.update(t);
+      this.weather.update(dt, this.controls.target);
+      if (this.weather.level !== this.lastStorm || this.weather.flash > 0) { this.lastStorm = this.weather.level; this.setTod(this.lastTod); }
       for (const h of this.hooks) h(dt, t);
       this.raft.update(dt, t);
       for (const c of this.characters.values()) c.update(t, dt);

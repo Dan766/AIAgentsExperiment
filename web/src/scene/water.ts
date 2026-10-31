@@ -3,12 +3,13 @@ import { SIZE, buildHeightTexture } from './terrain';
 
 const vert = /* glsl */ `
   uniform float uTime;
+  uniform float uStorm;
   varying vec3 vWorld;
   void main() {
     vec3 p = position;
     float w = sin(p.x * 0.35 + uTime * 0.9) * 0.05 + sin(p.z * 0.45 - uTime * 0.7) * 0.05
             + sin((p.x + p.z) * 0.8 + uTime * 1.6) * 0.025;
-    p.y += w;
+    p.y += w * (1.0 + uStorm * 4.5);
     vec4 wp = modelMatrix * vec4(p, 1.0);
     vWorld = wp.xyz;
     gl_Position = projectionMatrix * viewMatrix * wp;
@@ -24,6 +25,7 @@ const frag = /* glsl */ `
   uniform vec3 uSunColor;
   uniform vec3 uSunDir;
   uniform float uLight;
+  uniform float uStorm;
   uniform vec3 uFog;
   uniform float uFogNear;
   uniform float uFogFar;
@@ -59,6 +61,9 @@ const frag = /* glsl */ `
     float spec = pow(max(dot(reflect(-uSunDir, n), viewDir), 0.0), 120.0);
     col += uSunColor * spec * 1.4 * max(uSunDir.y, 0.0);
 
+    col = mix(col, col * vec3(0.55, 0.62, 0.7), uStorm);
+    foam += uStorm * 0.25 * noise(vWorld.xz * 2.0 + uTime) * smoothstep(1.4, 0.0, depth);
+    col = mix(col, vec3(1.0), clamp(foam, 0.0, 0.95) * 0.0);
     col *= uLight;
     float alpha = mix(0.55, 1.0, smoothstep(0.0, 0.85, shallow));
     alpha = max(alpha, foam);
@@ -87,6 +92,7 @@ export class Water {
         uSunColor: { value: new THREE.Color('#ffffff') },
         uSunDir: { value: new THREE.Vector3(0, 1, 0) },
         uLight: { value: 1 },
+        uStorm: { value: 0 },
         uFog: { value: new THREE.Color('#bfe3ff') },
         uFogNear: { value: 70 },
         uFogFar: { value: 220 },

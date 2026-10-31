@@ -12,3 +12,5 @@ runs/
 .env
 *.egg-info/
 web/public/game1.json
+web/public/god-demo.json
+sim/runs/

@@ -110,12 +110,21 @@ blockquote.refl { border-left-color: #a78bfa; }
 .marks { position: absolute; left: 8px; right: 8px; top: 0; bottom: 0; pointer-events: none; }
 .marks i { position: absolute; top: 3px; width: 3px; height: 8px; margin-left: -1px; border-radius: 2px; background: var(--dim); }
 .marks i.bad { background: var(--bad); height: 11px; box-shadow: 0 0 6px var(--bad); }
+.marks i.god { background: var(--gold); height: 13px; top: 1px; box-shadow: 0 0 8px var(--gold); }
 .marks i.vote { background: #8ab4ff; }
 .marks i.day { background: rgba(255, 255, 255, 0.4); height: 6px; bottom: 3px; top: auto; }
 .readout { min-width: 78px; text-align: right; font-size: 13px; color: var(--dim); font-variant-numeric: tabular-nums; }
 .speeds { display: flex; gap: 3px; }
 .speeds button { padding: 5px 9px; border-radius: 8px; font-size: 12px; color: var(--dim); background: rgba(255, 255, 255, 0.06); }
 .speeds button.on { color: #06222a; background: var(--accent); }
+
+/* ---- god event toast ---- */
+.toast { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 3px; max-width: 480px; padding: 11px 18px; border-radius: 14px; background: rgba(48, 36, 10, 0.86); border: 1px solid rgba(255, 211, 107, 0.55); box-shadow: 0 12px 34px rgba(0, 0, 0, 0.4), 0 0 24px rgba(255, 211, 107, 0.18); backdrop-filter: blur(12px); animation: toastin 0.4s ease-out; z-index: 5; }
+.toast b { color: var(--gold); font-size: 13px; text-transform: capitalize; }
+.toast span { font-size: 13px; color: #f4ead0; line-height: 1.4; }
+.toast.bad { border-color: rgba(255, 107, 94, 0.6); } .toast.bad b { color: var(--bad); }
+.toast.out { opacity: 0; transition: opacity 0.6s; }
+@keyframes toastin { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; } }
 
 /* ---- result banner ---- */
 .banner { position: absolute; left: 50%; top: 96px; transform: translateX(-50%); padding: 16px 26px; text-align: center; max-width: 520px; background: rgba(10, 18, 30, 0.82); border: 1px solid var(--glass-b); border-radius: var(--r); backdrop-filter: blur(14px); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4); }

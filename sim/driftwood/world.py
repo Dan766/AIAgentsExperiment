@@ -26,6 +26,7 @@ class World(BaseModel):
     wreck_gold_left: int
     ballots: dict[str, list[str]] = {}
     yield_mult: dict[str, float] = Field(default_factory=dict)  # god-mode scarcity knob
+    yield_until: dict[str, int] = Field(default_factory=dict)   # resource -> tick the multiplier expires
 
     @classmethod
     def new(cls, scenario: Scenario, names: list[str], seed: int = 0) -> "World":
@@ -62,6 +63,10 @@ class World(BaseModel):
         a missing intent means rest. At night everyone sleeps and physical intents are ignored."""
         if self.done:
             raise RuntimeError("game is over")
+        for res, until in list(self.yield_until.items()):
+            if self.tick >= until:
+                del self.yield_until[res]
+                self.yield_mult.pop(res, None)
         rng = random.Random(f"{self.seed}:{self.tick}")
         events: list[Event] = []
         if self.phase == "night":

@@ -60,6 +60,17 @@ CREATE TABLE IF NOT EXISTS beliefs (
     payload TEXT NOT NULL,                    -- {trust: {name: -1..1}, suspicions: ..., facts: [...]}
     PRIMARY KEY (run_id, day, agent)
 );
+CREATE TABLE IF NOT EXISTS god_events (       -- queue of experimenter interventions
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id INTEGER NOT NULL REFERENCES runs(id),
+    at_tick INTEGER,                          -- NULL = as soon as possible
+    type TEXT NOT NULL,
+    targets TEXT NOT NULL,
+    params TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',   -- pending | applied
+    applied_tick INTEGER,
+    created REAL NOT NULL
+);
 CREATE TABLE IF NOT EXISTS llm_calls (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     run_id INTEGER REFERENCES runs(id),
@@ -155,6 +166,36 @@ class Store:
         """Highest snapshot tick, i.e. how many ticks the run has completed."""
         row = self.db.execute("SELECT MAX(tick) FROM snapshots WHERE run_id = ?", (run_id,)).fetchone()
         return row[0]
+
+    # ---- god events ----------------------------------------------------------------------
+    def add_god_event(self, run_id: int, type_: str, targets, params: dict, at_tick: int | None = None) -> int:
+        with self.db:
+            cur = self.db.execute(
+                "INSERT INTO god_events (run_id, at_tick, type, targets, params, created) VALUES (?,?,?,?,?,?)",
+                (run_id, at_tick, type_, json.dumps(targets), json.dumps(params), time.time()))
+        return cur.lastrowid
+
+    def pending_god_events(self, run_id: int, tick: int) -> list[dict]:
+        rows = self.db.execute(
+            "SELECT * FROM god_events WHERE run_id = ? AND status = 'pending' AND (at_tick IS NULL OR at_tick <= ?)"
+            " ORDER BY COALESCE(at_tick, -1), id", (run_id, tick)).fetchall()
+        return [{**dict(r), "targets": json.loads(r["targets"]), "params": json.loads(r["params"])} for r in rows]
+
+    def god_events(self, run_id: int) -> list[dict]:
+        rows = self.db.execute("SELECT * FROM god_events WHERE run_id = ? ORDER BY id", (run_id,)).fetchall()
+        return [{**dict(r), "targets": json.loads(r["targets"]), "params": json.loads(r["params"])} for r in rows]
+
+    def commit_god_event(self, run_id: int, god_id: int, world: World, payload: dict,
+                         messages: Iterable[dict], extra: dict):
+        """Atomically: log the event (at the tick it follows, so replay frame `tick` includes it), rewrite the
+        current snapshot with its effects, and mark it applied. A crash can never apply an event twice."""
+        with self.db:
+            self._insert_event(run_id, world.tick - 1, "god", None, json.dumps(payload))
+            for m in messages:
+                self._insert_event(run_id, world.tick - 1, "message", m["sender"], json.dumps(m))
+            self._write_snapshot(run_id, world, extra)
+            self.db.execute("UPDATE god_events SET status = 'applied', applied_tick = ? WHERE id = ?",
+                            (world.tick, god_id))
 
     # ---- reading back --------------------------------------------------------------------
     def load_world(self, run_id: int, tick: int | None = None) -> World:

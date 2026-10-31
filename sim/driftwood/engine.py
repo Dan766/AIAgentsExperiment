@@ -5,6 +5,7 @@ from .actions import Event, Rest
 from .agents import Agent, Reflection
 from .llm.base import LLMResponse, Provider, QuotaExhausted
 from .llm.structured import JsonResult
+from . import events as god
 from .perception import observe
 from .personas import Persona
 from .store import Store
@@ -23,6 +24,7 @@ class TickReport:
     thoughts: dict[str, str]
     reflections: dict[str, Reflection]
     failures: dict[str, str]
+    god: list[dict] = field(default_factory=list)   # god events applied just before this tick
 
 
 @dataclass
@@ -89,9 +91,35 @@ class Engine:
                 output_tokens=resp.output_tokens if resp else None, ok=ok, error=error)
         return log
 
+    def _extra(self) -> dict:
+        return {"agents": {n: a.dump() for n, a in self.agents.items()}}
+
+    def inject(self, type_: str, targets="all", params: dict | None = None, at_tick: int | None = None) -> int:
+        """Queue an event (validated now, applied at the start of the next due tick)."""
+        god.validate(type_, params or {}, targets, list(self.world.agents))
+        return self.store.add_god_event(self.run_id, type_, targets, params or {}, at_tick)
+
+    def apply_due_god_events(self) -> list[dict]:
+        """Apply queued events that are due. Each is committed atomically with a snapshot rewrite, so it is safe
+        even if the tick that follows gets interrupted by a usage limit."""
+        applied = []
+        for row in self.store.pending_god_events(self.run_id, self.world.tick):
+            try:
+                out = god.apply_event(self.world, self.agents, row["type"], row["targets"], row["params"])
+                payload = {"type": row["type"], "targets": row["targets"], "params": row["params"],
+                           "description": out.description, "tick": self.world.tick}
+            except god.GodError as e:  # e.g. a deadline that has since passed: record, do not crash the run
+                out = god.Outcome(description=f"FAILED: {e}")
+                payload = {"type": row["type"], "targets": row["targets"], "params": row["params"],
+                           "description": out.description, "tick": self.world.tick, "failed": True}
+            self.store.commit_god_event(self.run_id, row["id"], self.world, payload, out.messages, self._extra())
+            applied.append(payload)
+        return applied
+
     async def tick(self) -> TickReport:
         """Run one tick. If a usage limit interrupts the model calls, QuotaExhausted propagates and
         nothing has been mutated or saved, so the tick can simply be run again later."""
+        god_applied = self.apply_due_god_events()
         w = self.world
         night = w.phase == "night"
         end_of_day = night
@@ -146,10 +174,10 @@ class Engine:
         extra_events += [("system", n, {"type": "decision_failed", "error": e}) for n, e in failures.items()]
         thought_rows = list(thoughts.items()) + [(n, f"[reflection] {r.reflection}") for n, r in reflections.items()]
         self.store.save_tick(self.run_id, w, events, thoughts=thought_rows,
-                             extra={"agents": {n: a.dump() for n, a in self.agents.items()}},
+                             extra=self._extra(),
                              extra_events=extra_events)
         assert w.tick == w_after_tick
-        return TickReport(tick_no, day, phase, turns, events, delivered, thoughts, reflections, failures)
+        return TickReport(tick_no, day, phase, turns, events, delivered, thoughts, reflections, failures, god_applied)
 
     def _deliver_messages(self, tick: int, turns: dict[str, AgentTurn | None]):
         """Validate channels, queue messages into recipients' inboxes. Delivery is next-tick (simultaneous talk)."""
