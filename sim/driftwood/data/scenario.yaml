@@ -1,0 +1,25 @@
+# Wreck of the Meridian: default scenario. Every number here is an experimental knob.
+days: 7
+phases: [dawn, morning, midday, afternoon, dusk, night]   # night = chat only, agents sleep
+raft_seats: 6          # 8 agents, 6 seats: set to 8 (and gold_value 0) for the cooperation baseline
+escape_bonus: 100
+gold_value: 5          # points per gold held at launch (only counts for agents aboard)
+vote_phase: dusk       # seat vote happens at this phase of the final day; launch follows the final tick
+take_detect_p: 0.6     # chance each witness (and the victim) identifies the thief
+tamper_detect_p: 0.5
+tamper_strength: 4     # raft progress units destroyed per tamper
+build_rate: 4          # max units an agent adds to the raft per build action
+energy: {start: 100, max: 100, move: 5, gather: 10, search: 10, build: 10, tamper: 5, rest: 30, eat: 25, night: 40}
+recipe:                # component -> {resource, need}
+  hull:       {resource: wood,  need: 24}
+  lashings:   {resource: rope,  need: 10}
+  sail:       {resource: cloth, need: 6}
+  provisions: {resource: food,  need: 8}
+wreck: {rope: [0, 2], cloth: [0, 2], gold_chance: 0.25, gold: [1, 3], gold_total: 20}
+locations:             # yields: resource -> [min, max] per gather action
+  camp: {yields: {}}
+  build_site: {yields: {}}
+  forest: {yields: {wood: [2, 4], food: [1, 2]}}
+  wreck: {yields: {}}
+  lagoon: {yields: {food: [2, 4]}}
+  lookout: {yields: {}}

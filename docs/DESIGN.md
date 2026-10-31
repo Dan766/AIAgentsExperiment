@@ -36,8 +36,8 @@ Each agent privately knows its own scoring rule. It is told that the others have
 ```
 personal_score =
     ESCAPE_BONUS           if the agent is aboard the raft when it launches (default 100)
-  + GOLD_VALUE × gold held  at launch (default 5 per coin; gold comes from the wreck)
-  − 0                       otherwise (the agent is left behind for the storm)
+  + GOLD_VALUE × gold held  at launch, ONLY if aboard (default 5 per coin; gold comes from the wreck)
+  − 0                       otherwise (an agent left behind scores 0, gold included)
 ```
 
 Two levers create conflict:
@@ -45,9 +45,11 @@ Two levers create conflict:
 1. **Limited seats.** `RAFT_SEATS` defaults to **6 for 8 agents**. Seats are assigned by a **group vote** on launch day, and each agent casts one vote for each of 6 names. This produces politics, alliances, reputation management and a reason to undermine rivals.
 2. **Gold vs. labor.** Searching the wreck for gold takes time away from building. Gold can be hoarded, traded, hidden or stolen. This rewards free-riding and theft.
 
+Gold held counts the agent's inventory plus its private caches, never the shared stockpile. Seat ties break on units built, then a seeded coin.
+
 Both levers are **scenario knobs**. Setting `RAFT_SEATS = 8` and `GOLD_VALUE = 0` gives a pure-cooperation baseline, which makes this a natural experimental axis.
 
-If the raft isn't finished by the deadline, nobody escapes and everyone scores 0 plus nothing. Sabotage therefore carries real collective risk.
+If the raft isn't finished by the deadline, nobody escapes and everyone scores 0. Sabotage therefore carries real collective risk.
 
 ### 2.2 The raft recipe (default)
 
@@ -74,7 +76,7 @@ Build progress is public and visible in 3D. Components can be **damaged**: a dam
 
 ### 2.4 Time
 - **6 ticks per day**: dawn, morning, midday, afternoon, dusk, night. Night is chat-only, and agents rest.
-- **7 days ≈ 42 ticks.** Launch and the seat vote happen at dawn on day 7.
+- **7 days ≈ 42 ticks.** The seat vote takes place at dusk on day 7 (it replaces that tick's physical action), and the launch is resolved after the final tick.
 - Every agent acts in parallel each tick, and actions resolve simultaneously in a seeded random order.
 
 ### 2.5 Needs

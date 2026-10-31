@@ -3,7 +3,7 @@
 Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test that must pass before moving on.
 ⭐ = milestone. See [DESIGN.md](DESIGN.md) for the details behind each item.
 
-**Current phase:** 1 (World model). Phase 0 complete.
+**Current phase:** 2 (Persistence). Phases 0 and 1 complete.
 
 ---
 
@@ -21,14 +21,14 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 ---
 
 ## Phase 1: World model (pure Python, no LLM)
-- [ ] `data/scenario.yaml`: locations, resources and yields, raft recipe, seats, gold value, deadline, ticks per day, detection p
-- [ ] `world.py`: World, Location, Agent state (position, inventory, energy, caches), Raft components, stockpile, clock
-- [ ] `actions.py`: action schemas (pydantic), a validator per action (location, inventory, energy, phase rules)
-- [ ] Simultaneous resolution with a seeded order, plus conflict handling (two agents withdrawing the last wood)
-- [ ] Witness system: who saw what, with probabilistic detection for `take` and `tamper`
-- [ ] Energy, exhaustion and the night phase (chat only)
-- [ ] `scoring.py`: seat vote tally (with tie-break rule), escape check, final scores
-- [ ] Unit tests for every action plus the scoring rules
+- [x] `data/scenario.yaml`: locations, resources and yields, raft recipe, seats, gold value, deadline, ticks per day, detection p
+- [x] `world.py`: World, Location, Agent state (position, inventory, energy, caches), Raft components, stockpile, clock
+- [x] `actions.py`: action schemas (pydantic), a validator per action (location, inventory, energy, phase rules)
+- [x] Simultaneous resolution (implemented as a seeded random order within the tick) with a seeded order, plus conflict handling (two agents withdrawing the last wood)
+- [x] Witness system: who saw what, with probabilistic detection for `take` and `tamper`
+- [x] Energy, exhaustion and the night phase (chat only)
+- [x] `scoring.py`: seat vote tally (with tie-break rule), escape check, final scores
+- [x] Unit tests for every action plus the scoring rules
 
 **✅ Done when:** a test plays a full 42-tick game with hard-coded intents and produces the expected scores deterministically from a seed.
 
