@@ -2,7 +2,7 @@ import random
 
 from pydantic import BaseModel, Field
 
-from .actions import Action, Event, Rest, resolve
+from .actions import Action, Event, Rest, Vote, resolve
 from .config import Scenario
 
 
@@ -41,10 +41,12 @@ class World(BaseModel):
     @property
     def day(self) -> int:
         """1-based day number."""
-        return self.tick // self.scenario.ticks_per_day + 1
+        return min(self.tick // self.scenario.ticks_per_day + 1, self.scenario.days)
 
     @property
     def phase(self) -> str:
+        if self.tick >= self.scenario.vote_tick:
+            return "ballot"
         return self.scenario.phases[self.tick % self.scenario.ticks_per_day]
 
     @property
@@ -65,6 +67,13 @@ class World(BaseModel):
         if self.phase == "night":
             for s in self.agents.values():
                 s.energy = min(self.scenario.energy.max, s.energy + self.scenario.energy.night)
+        elif self.phase == "ballot":
+            order = list(self.agents)
+            rng.shuffle(order)
+            for name in order:
+                intent = intents.get(name)
+                if isinstance(intent, Vote):  # only ballots count at the ballot; everything else is ignored
+                    events.append(resolve(self, name, intent, rng))
         else:
             order = list(self.agents)
             rng.shuffle(order)

@@ -43,7 +43,6 @@ class Scenario(BaseModel):
     raft_seats: int
     escape_bonus: int
     gold_value: int
-    vote_phase: str
     take_detect_p: float
     tamper_detect_p: float
     tamper_strength: int
@@ -58,12 +57,13 @@ class Scenario(BaseModel):
         return len(self.phases)
 
     @property
-    def total_ticks(self) -> int:
+    def vote_tick(self) -> int:
+        """The ballot is its own tick after the final night, so everyone gets one last night to negotiate."""
         return self.days * self.ticks_per_day
 
     @property
-    def vote_tick(self) -> int:
-        return (self.days - 1) * self.ticks_per_day + self.phases.index(self.vote_phase)
+    def total_ticks(self) -> int:
+        return self.vote_tick + 1
 
 
 def load_scenario(path: Path | None = None, **overrides) -> Scenario:

@@ -77,8 +77,8 @@ def test_restored_world_continues_identically(store):
 def test_every_tick_has_a_snapshot_and_can_be_loaded(store):
     world, rid = new_run(store)
     play_into(store, rid, world)
-    assert store.latest_tick(rid) == 42
-    for t in (0, 1, 13, 41, 42):
+    assert store.latest_tick(rid) == 43
+    for t in (0, 1, 13, 41, 43):
         assert store.load_world(rid, t).tick == t
 
 

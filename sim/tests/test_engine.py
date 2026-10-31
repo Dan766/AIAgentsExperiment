@@ -151,15 +151,16 @@ async def test_full_mock_game_completes_votes_and_logs_everything():
     reports = []
     await eng.run(on_tick=reports.append)
     w = eng.world
-    assert w.done and w.tick == 42 and len(reports) == 42
+    total = w.scenario.total_ticks
+    assert w.done and w.tick == total == 43 and len(reports) == total
     assert len(w.ballots) == 8
     out = finalize(w)
     assert set(out.scores) == set(NAMES)
     assert eng.stats.failed == 0 and eng.stats.invalid_rate == 0 and eng.stats.leaks == 0
-    # 42 decide calls x 8, plus 7 reflections x 8
-    assert eng.stats.calls == 42 * 8 + 7 * 8
+    # a decide call per agent per tick, plus a reflection per agent each night
+    assert eng.stats.calls == total * 8 + 7 * 8
     st = eng.store
-    assert st.latest_tick(eng.run_id) == 42 and st.get_run(eng.run_id)["status"] == "finished"
+    assert st.latest_tick(eng.run_id) == total and st.get_run(eng.run_id)["status"] == "finished"
     assert len(st.beliefs(eng.run_id)) == 7 * 8
     assert any(e["kind"] == "message" for e in st.events(eng.run_id))
     assert len(st.thoughts(eng.run_id, agent="Mara")) >= 42

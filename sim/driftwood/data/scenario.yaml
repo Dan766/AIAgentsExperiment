@@ -4,7 +4,7 @@ phases: [dawn, morning, midday, afternoon, dusk, night]   # night = chat only, a
 raft_seats: 6          # 8 agents, 6 seats: set to 8 (and gold_value 0) for the cooperation baseline
 escape_bonus: 100
 gold_value: 5          # points per gold held at launch (only counts for agents aboard)
-vote_phase: dusk       # seat vote happens at this phase of the final day; launch follows the final tick
+# After the final night there is one extra "ballot" tick: vote-only, secret; launch is resolved right after it.
 take_detect_p: 0.6     # chance each witness (and the victim) identifies the thief
 tamper_detect_p: 0.5
 tamper_strength: 4     # raft progress units destroyed per tamper

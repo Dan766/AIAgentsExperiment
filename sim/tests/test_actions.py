@@ -232,3 +232,17 @@ def test_scoring_without_ballots_still_seats_someone_deterministically():
     w = _vote_world({})
     first = finalize(w)
     assert len(first.seats) == 6 and finalize(w).seats == first.seats
+
+
+def test_ballot_tick_accepts_only_votes_and_follows_the_last_night(world):
+    sc = world.scenario
+    assert sc.vote_tick == 42 and sc.total_ticks == 43
+    world.tick = 41
+    assert world.phase == "night" and world.day == 7
+    world.step({})
+    assert world.phase == "ballot" and world.day == 7 and not world.done
+    ballot = NAMES[:6]
+    events = world.step({"A": Vote(names=ballot), "B": Move(location="forest"), "C": Vote(names=NAMES[:5])})
+    assert [e.actor for e in events if e.ok] == ["A"] and [e.actor for e in events if not e.ok] == ["C"]
+    assert world.agents["B"].location == "camp"  # non-votes are ignored at the ballot
+    assert world.done and world.ballots == {"A": ballot}

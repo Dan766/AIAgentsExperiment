@@ -1,4 +1,4 @@
-"""Plays full 42-tick games with scripted (non-LLM) agents and checks determinism."""
+"""Plays full 43-tick games (7 days + the ballot tick) with scripted (non-LLM) agents and checks determinism."""
 from driftwood.actions import (Build, Gather, Move, SearchWreck, Stash, Take, Tamper, Vote)
 from driftwood.config import load_scenario
 from driftwood.scoring import finalize
@@ -64,7 +64,7 @@ def play(seed):
 
 def test_full_game_launches_with_expected_structure():
     world, log, out = play(seed=7)
-    assert world.done and world.tick == 42
+    assert world.done and world.tick == 43
     assert out.launched, world.raft
     assert set(out.seats) == set(NAMES[:6])
     assert all(out.scores[n] >= 100 for n in out.seats)

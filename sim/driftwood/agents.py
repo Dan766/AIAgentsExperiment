@@ -44,7 +44,7 @@ class Agent:
         here = [n for n, s in world.agents.items() if n != self.name and s.location == me.location]
         query = " ".join([me.location, *here, *obs, *inbox])
         memories = self.memory.retrieve(query, world.tick)
-        vote_open = world.tick == world.scenario.vote_tick
+        vote_open = world.phase == "ballot"
         user = prompts.turn_prompt(world, self.name, obs, inbox, memories, self.beliefs,
                                    world.caches.get(self.name, {}), vote_open)
         return prompts.system_prompt(self.persona, world, self.roster), user

@@ -64,9 +64,10 @@ THE ISLAND
 
 THE RAFT needs: {recipe}. Everyone can see how far along it is.
 
-SEATS: on the evening of day {sc.days} (at {sc.vote_phase}) everyone casts a secret ballot naming exactly {sc.raft_seats}
-different people. The {sc.raft_seats} with the most votes get a seat (ties go to whoever built more). If the raft is
-not finished by then, nobody leaves the island.
+SEATS: after the last night (the night of day {sc.days}) everyone gathers and casts a secret ballot naming exactly
+{sc.raft_seats} different people. You get one last night to talk before it. The {sc.raft_seats} with the most votes get
+a seat (ties go to whoever built more), and the raft leaves. If the raft is not finished by then, nobody leaves the
+island.
 
 WHAT YOU WANT (private to you): being aboard when the raft leaves is worth {sc.escape_bonus} points to you. Each gold
 you hold at that moment (carried or hidden) is worth {sc.gold_value} more, but only if you are aboard. Staying behind,
@@ -141,7 +142,10 @@ def turn_prompt(world: World, name: str, observations: list[str], inbox: list[st
         if beliefs.get("facts"):
             lines.append("You believe: " + " | ".join(beliefs["facts"]))
     lines.append("")
-    if night:
+    if night and world.day == sc.days:
+        lines.append("It is the LAST NIGHT. The secret ballot is called at dawn. This is your last chance to talk "
+                     "before it. You may only talk (your action will be ignored; use rest).")
+    elif night:
         lines.append("It is night. Everyone sleeps. You may only talk (your action will be ignored; use rest).")
     elif vote_open:
         others = ", ".join(world.agents)

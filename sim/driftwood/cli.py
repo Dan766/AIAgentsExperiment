@@ -10,7 +10,7 @@ from .llm.brain import BrainMock
 from .llm.cache import CachedProvider
 from .llm.claude_cli import ClaudeCLIProvider
 from .personas import load_personas
-from .scoring import finalize
+from .report import build_report, format_report
 from .store import Store
 from .world import World
 
@@ -83,8 +83,7 @@ async def cmd_run(args) -> int:
           f"({s.invalid_rate:.1%}), failed {s.failed}, cache hits {s.cache_hits}, thought leaks {s.leaks}, "
           f"tokens in/out {s.input_tokens}/{s.output_tokens}")
     if engine.world.done:
-        out = finalize(engine.world)
-        print(f"Raft launched: {out.launched}. Seats: {out.seats}\nScores: {out.scores}")
+        print("\n" + format_report(build_report(store, engine.run_id)))
     return 0
 
 
@@ -106,7 +105,14 @@ def main(argv=None):
     r.add_argument("--resume", type=int, metavar="RUN_ID")
     r.add_argument("--label", default="")
     r.add_argument("--thoughts", action="store_true", help="also print private thoughts")
+    rep = sub.add_parser("report", help="print the end-of-game report for a run")
+    rep.add_argument("run_id", type=int)
+    rep.add_argument("--db", default="runs/driftwood.db")
     args = ap.parse_args(argv)
+    if args.cmd == "report":
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        print(format_report(build_report(Store(args.db), args.run_id)))
+        return
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     Path(args.db).parent.mkdir(parents=True, exist_ok=True)

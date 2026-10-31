@@ -126,7 +126,8 @@ class Engine:
         events = w.step(intents)
         w_after_tick = w.tick
 
-        delivered, sent_by = self._deliver_messages(tick_no, turns)
+        # the ballot is secret and final: nobody gets to talk during it
+        delivered, sent_by = self._deliver_messages(tick_no, turns) if phase != "ballot" else ([], {})
         seen = observe(events, list(self.agents))
         for n, agent in self.agents.items():
             agent.commit_turn(tick_no, sent_by.get(n, []))
