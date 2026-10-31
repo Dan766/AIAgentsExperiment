@@ -3,7 +3,7 @@
 Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test that must pass before moving on.
 ⭐ = milestone. See [DESIGN.md](DESIGN.md) for the details behind each item.
 
-**Current phase:** 2 (Persistence). Phases 0 and 1 complete.
+**Current phase:** 3 (LLM layer). Phases 0-2 complete.
 
 ---
 
@@ -35,10 +35,10 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 ---
 
 ## Phase 2: Persistence
-- [ ] `store.py`: SQLite schema with tables `runs`, `ticks`, `events` (actions, messages, observations, god events), `thoughts`, `snapshots`, `beliefs`, `llm_calls`
-- [ ] Write the full event stream per tick, and a world snapshot (JSON) at the end of each tick
-- [ ] Load a snapshot back into a World with an exact round trip
-- [ ] Tests: round trip, querying the events for a tick
+- [x] `store.py`: SQLite schema with tables `runs`, `ticks`, `events` (actions, messages, observations, god events), `thoughts`, `snapshots`, `beliefs`, `llm_calls`
+- [x] Write the full event stream per tick, and a world snapshot (JSON) at the end of each tick
+- [x] Load a snapshot back into a World with an exact round trip
+- [x] Tests: round trip, querying the events for a tick
 
 **✅ Done when:** a game run is saved and restored mid-game, and the restored state is identical to the original.
 
