@@ -3,7 +3,7 @@
 Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test that must pass before moving on.
 ⭐ = milestone. See [DESIGN.md](DESIGN.md) for the details behind each item.
 
-**Current phase:** 3 (LLM layer). Phases 0-2 complete.
+**Current phase:** 4 (Agents, first real run). Phases 0-3 complete.
 
 ---
 
@@ -45,14 +45,14 @@ Check items off (`[x]`) as we go. Each phase ends with a **✅ Done when** test 
 ---
 
 ## Phase 3: LLM layer
-- [ ] `llm/base.py`: `Provider` interface with an async `complete(system, prompt) -> str` and usage metadata
-- [ ] `llm/mock.py`: a MockProvider that returns valid random or scripted intents (free development)
-- [ ] `llm/claude_cli.py`: async subprocess provider using the isolation flags, with a timeout and a concurrency semaphore (4)
-- [ ] Detect usage limits and errors, then raise a `QuotaExhausted` that the engine can catch
-- [ ] `llm/cache.py`: sha256-keyed response cache with `replay` / `cached` / `fresh` modes
-- [ ] JSON extraction and validation, with one retry that includes the error message, then fall back to rest
-- [ ] Log every call (latency, tokens if available, cache hit, failure) to `llm_calls`
-- [ ] (stub) `llm/anthropic_api.py` for later
+- [x] `llm/base.py`: `Provider` interface with an async `complete(system, prompt) -> str` and usage metadata
+- [x] `llm/mock.py`: a MockProvider that returns valid random or scripted intents (free development)
+- [x] `llm/claude_cli.py`: async subprocess provider using the isolation flags, with a timeout and a concurrency semaphore (4)
+- [x] Detect usage limits and errors, then raise a `QuotaExhausted` that the engine can catch
+- [x] `llm/cache.py`: sha256-keyed response cache with `replay` / `cached` / `fresh` modes
+- [x] JSON extraction and validation, with one retry that includes the error message, then fall back to rest
+- [x] Log every call (latency, tokens if available, cache hit, failure) to `llm_calls`
+- [x] (stub) `llm/anthropic_api.py` for later (`turn.py` also holds the AgentTurn output schema)
 
 **✅ Done when:** 8 parallel isolated Haiku calls return parsed intents, and a second identical run is served 100% from the cache.
 
