@@ -1,0 +1,10 @@
+pydantic>=2
+pyyaml
+fastapi
+uvicorn[standard]
+websockets
+
+[dev]
+pytest
+pytest-asyncio
+ruff

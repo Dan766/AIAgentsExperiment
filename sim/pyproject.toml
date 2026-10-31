@@ -1,0 +1,26 @@
+[project]
+name = "driftwood"
+version = "0.1.0"
+description = "LLM agent island sandbox"
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2", "pyyaml", "fastapi", "uvicorn[standard]", "websockets"]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "ruff"]
+
+[project.scripts]
+driftwood = "driftwood.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["driftwood*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
